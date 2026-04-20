@@ -1,114 +1,117 @@
 import streamlit as st
+import pandas as pd
+import feedparser
 import os
 
-# Configuración de la página
-st.set_page_config(page_title="Vinotinto Global", page_icon="🇻🇪", layout="wide")
+# 1. CONFIGURACIÓN DE LA PÁGINA
+st.set_page_config(
+    page_title="Vinotinto Global 2026",
+    page_icon="🇻🇪",
+    layout="wide"
+)
 
-# Estilos CSS
+# 2. ESTILO CSS PARA ASEGURAR QUE EL MENÚ SE VEA (Fondo oscuro, letras claras)
 st.markdown("""
     <style>
-    .main { background-color: #0e1117; color: white; }
-    .stTable { background-color: #1f2937; border-radius: 10px; }
-    .atleta-card {
-        background: #2d0a0a;
-        padding: 15px;
+    [data-testid="stSidebar"] {
+        background-color: #4a0e0e;
+        color: white;
+    }
+    [data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    .stApp {
+        background-color: #0e1117;
+        color: white;
+    }
+    .news-card {
+        background-color: #1f2937;
+        padding: 20px;
         border-radius: 10px;
         border-left: 5px solid #ffcc00;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
     }
+    a { color: #ffcc00 !important; text-decoration: none; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- MENÚ DE COMPETENCIAS ---
+# 3. FUNCIÓN PARA OBTENER NOTICIAS REALES (RSS)
+def obtener_noticias_reales():
+    # Usamos el feed de una fuente deportiva que cubre atletas venezolanos
+    url_feed = "https://www.liderendeportes.com/feed/" 
+    feed = feedparser.parse(url_feed)
+    noticias = []
+    for entry in feed.entries[:10]: # Tomamos las últimas 10 noticias reales
+        noticias.append({
+            "Título": entry.title,
+            "Link": entry.link,
+            "Publicado": entry.published
+        })
+    return noticias
+
+# 4. MENÚ LATERAL (CORREGIDO)
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/4/48/Flag_of_Venezuela.svg", width=100)
-    st.title("Monitor Deportivo")
-    menu = st.selectbox(
-        "Seleccione Disciplina:",
-        ["Portada", "Fútbol Masculino (Legionarios)", "Fútbol Femenino (Mundial)", "MLB (Grandes Ligas)", "Baloncesto (Mundial)", "Polideportivo (Olímpicos)", "Liga FUTVE"]
+    st.markdown("# 🏆 MENÚ")
+    if os.path.exists("logo_vinotinto.png"):
+        st.image("logo_vinotinto.png", use_container_width=True)
+    else:
+        st.markdown("<h1 style='text-align: center;'>🇻🇪</h1>", unsafe_allow_html=True)
+    
+    st.write("---")
+    menu = st.radio(
+        "SELECCIONE UNA CATEGORÍA:",
+        ["🏠 Inicio / Noticias", "⚾ MLB Venezolanos", "⚽ Fútbol Nacional/Int.", "🏅 Polideportivo", "👩 Femenino"]
     )
     st.write("---")
-    st.caption("Reflexiones de Willian Almenar © 2026")
+    st.markdown("### Reflexiones de Willian Almenar")
 
-# --- LÓGICA DE CONTENIDO ---
-
-if menu == "Portada":
-    st.title("🇻🇪 BIENVENIDO A VINOTINTO GLOBAL")
-    st.subheader("El registro más completo de atletas venezolanos en el mundo.")
-    if os.path.exists("logo_vinotinto.png"):
-        st.image("logo_vinotinto.png", width=300)
-    st.info("Utilice el menú de la izquierda para desplegar la lista de atletas activos por disciplina.")
-
-elif menu == "Fútbol Masculino (Legionarios)":
-    st.header("⚽ Legionarios Vinotinto (Europa, América y Asia)")
-    st.write("Seguimiento de jugadores activos en ligas internacionales.")
+# 5. LÓGICA DE PANTALLA PRINCIPAL
+if menu == "🏠 Inicio / Noticias":
+    st.title("🇻🇪 NOTICIAS EN VIVO - ATLETAS VENEZOLANOS")
+    st.write(f"Actualizado al: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}")
     
+    try:
+        noticias = obtener_noticias_reales()
+        for n in noticias:
+            st.markdown(f"""
+            <div class="news-card">
+                <h4>{n['Título']}</h4>
+                <p style='font-size: 0.8rem; color: #aaa;'>Publicado: {n['Publicado']}</p>
+                <a href="{n['Link']}" target="_blank">Leer noticia completa →</a>
+            </div>
+            """, unsafe_allow_html=True)
+    except:
+        st.error("Hubo un problema al conectar con las noticias en vivo. Intenta refrescar la página.")
+
+elif menu == "⚾ MLB Venezolanos":
+    st.header("⚾ Seguimiento MLB (Datos Reales 2026)")
+    st.write("Principales estrellas activas hoy:")
     st.table([
-        {"Jugador": "Salomón Rondón", "Club": "Pachuca (MEX)", "Estatus": "Activo - Goleador"},
-        {"Jugador": "Yeferson Soteldo", "Club": "Grêmio (BRA)", "Estatus": "Activo - Titular"},
-        {"Jugador": "Yangel Herrera", "Club": "Girona (ESP)", "Estatus": "Activo - La Liga"},
-        {"Jugador": "Jefferson Savarino", "Club": "Botafogo (BRA)", "Estatus": "Activo - Titular"},
-        {"Jugador": "Jhonder Cádiz", "Club": "León (MEX)", "Estatus": "Activo - Goleador"},
-        {"Jugador": "Jon Aramburu", "Club": "Real Sociedad (ESP)", "Estatus": "Activo - Promesa"},
-        {"Jugador": "Telasco Segovia", "Club": "Casa Pia (POR)", "Estatus": "Activo - Europa"}
+        {"Atleta": "Luis Arráez", "Equipo": "Padres", "Detalle": "Lucha por el título de bateo"},
+        {"Atleta": "José Altuve", "Equipo": "Astros", "Detalle": "Líder en hits de la franquicia"},
+        {"Atleta": "Anthony Santander", "Equipo": "Orioles", "Detalle": "Poder jononero activo"},
+        {"Atleta": "William Contreras", "Equipo": "Brewers", "Detalle": "Receptor estelar"}
     ])
 
-elif menu == "Fútbol Femenino (Mundial)":
-    st.header("👩 Guerreras Vinotinto (Todas las Categorías)")
-    st.write("Venezolanas destacadas en el fútbol femenino mundial.")
-    
+elif menu == "⚽ Fútbol Nacional/Int.":
+    st.header("⚽ Fútbol Masculino")
+    st.markdown("### 🌍 Legionarios Destacados")
+    st.info("Próximos compromisos eliminatorias: Ver noticias en Inicio")
     st.table([
-        {"Jugadora": "Deyna Castellanos", "Club": "Bay FC (USA)", "Liga": "NWSL"},
-        {"Jugadora": "Oriana Altuve", "Club": "Real Betis (ESP)", "Liga": "Liga F"},
-        {"Jugadora": "Mariana Speckmaier", "Club": "Wellington Phoenix", "Liga": "A-League"},
-        {"Jugadora": "Ysaura Viso", "Club": "Colo-Colo (CHI)", "Liga": "Primera División"},
-        {"Jugadora": "Verónica Herrera", "Club": "Costa Adeje Tenerife", "Liga": "Liga F"},
-        {"Jugadora": "Bárbara Olivieri", "Club": "Houston Dash (USA)", "Liga": "NWSL"}
+        {"Jugador": "Salomón Rondón", "Liga": "MX", "Club": "Pachuca"},
+        {"Jugador": "Yeferson Soteldo", "Liga": "BRA", "Club": "Grêmio"},
+        {"Jugador": "Yangel Herrera", "Liga": "ESP", "Club": "Girona"}
     ])
 
-elif menu == "MLB (Grandes Ligas)":
-    st.header("⚾ Venezolanos en la MLB")
-    st.write("Nuestras estrellas en el mejor béisbol del mundo.")
-    
+elif menu == "👩 Femenino":
+    st.header("👩 Vinotinto Femenina")
+    st.markdown("### 🏆 Representación Mundial")
     st.table([
-        {"Nombre": "Luis Arráez", "Equipo": "San Diego Padres", "Rol": "Infielder"},
-        {"Nombre": "José Altuve", "Equipo": "Houston Astros", "Rol": "Segunda Base"},
-        {"Nombre": "Anthony Santander", "Equipo": "Baltimore Orioles", "Rol": "Outfielder"},
-        {"Nombre": "Salvador Pérez", "Equipo": "Kansas City Royals", "Rol": "Receptor"},
-        {"Nombre": "William Contreras", "Equipo": "Milwaukee Brewers", "Rol": "Receptor"},
-        {"Nombre": "Jackson Chourio", "Equipo": "Milwaukee Brewers", "Rol": "Outfielder"},
-        {"Nombre": "Pablo López", "Equipo": "Minnesota Twins", "Rol": "Lanzador Abridor"}
+        {"Jugadora": "Deyna Castellanos", "Club": "Bay FC (USA)"},
+        {"Jugadora": "Oriana Altuve", "Club": "Betis (ESP)"},
+        {"Jugadora": "Verónica Herrera", "Club": "Tenerife (ESP)"}
     ])
 
-elif menu == "Baloncesto (Mundial)":
-    st.header("🏀 Baloncesto: Venezolanos por el Mundo")
-    st.table([
-        {"Jugador": "Michael Carrera", "Equipo": "Movistar Estudiantes (ESP)", "Liga": "LEB Oro"},
-        {"Jugador": "Fabrizio Pugliatti", "Equipo": "Stella Azzurra (ITA)", "Liga": "Serie B"},
-        {"Jugador": "Gregory Vargas", "Equipo": "Gladiadores", "Liga": "SPB / BCLA"},
-        {"Jugador": "Garly Sojo", "Estatus": "Memoria Eterna", "Nota": "Referente Vinotinto"}
-    ])
-
-elif menu == "Polideportivo (Olímpicos)":
-    st.header("🏅 Atletas de Élite - Diversas Disciplinas")
-    st.write("Venezolanos compitiendo en el ciclo olímpico e internacional.")
-    
-    st.table([
-        {"Atleta": "Yulimar Rojas", "Disciplina": "Triple Salto", "Estatus": "Campeona Mundial"},
-        {"Atleta": "Keydomar Vallenilla", "Disciplina": "Halterofilia", "Estatus": "Medallista Olímpico"},
-        {"Atleta": "Julio Mayora", "Disciplina": "Halterofilia", "Estatus": "Medallista Olímpico"},
-        {"Atleta": "Daniel Dhers", "Disciplina": "BMX Freestyle", "Estatus": "Leyenda Activa"},
-        {"Atleta": "Rubén Limardo", "Disciplina": "Esgrima", "Estatus": "Campeón Olímpico"},
-        {"Atleta": "Anriquelis Barrios", "Disciplina": "Judo", "Estatus": "Élite Mundial"},
-        {"Atleta": "Yohandri Granado", "Disciplina": "Taekwondo", "Estatus": "Clasificado"}
-    ])
-
-elif menu == "Liga FUTVE":
-    st.header("🇻🇪 Fútbol Nacional - Liga FUTVE")
-    st.write("Equipos y jugadores destacados localmente.")
-    st.table([
-        {"Equipo": "Deportivo Táchira", "Sede": "San Cristóbal", "Estatus": "Primera División"},
-        {"Equipo": "Caracas FC", "Sede": "Caracas", "Estatus": "Primera División"},
-        {"Equipo": "Academia Puerto Cabello", "Sede": "Carabobo", "Estatus": "Primera División"},
-        {"Equipo": "Portuguesa FC", "Sede": "Acarigua", "Estatus": "Primera División"}
-    ])
+else:
+    st.header(f"🏅 {menu}")
+    st.write("Consulta la sección de noticias para resultados de atletismo, pesas y más.")
